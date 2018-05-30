@@ -68,6 +68,8 @@ class Engine(object):
 
         edge = 0
         linesD = np.ones((Nodes, Nodes), dtype="uint64") * (256 * VLen)
+        canvas = np.ones((2048, 2048), dtype="uint8") *255
+
         while True:
             print "Edges: %s, at %s" % (edge, datetime.now())
 
@@ -96,20 +98,20 @@ class Engine(object):
                 img[i, j] = 255 if (255-color < p) else p+color
             lines.append((i0, j0))
 
+            cv2.line(canvas, CanvasAnchors[i0], CanvasAnchors[j0], 0, 1)
             edge += 1
-            if edge % 100 == 0:
+            if edge % 50 == 0:
                 filename = "VLen%s_DeclineFactor%s_%s" % (VLen, self.DeclineFactor, edge)
                 np.save("./output/%s.npy" % filename, lines.mat)
 
-                canvas = np.ones((2048, 2048), dtype="uint8") *255
-                coo = sparse.coo_matrix(lines.mat)
-                for i, j in zip(coo.row, coo.col):
-                    cv2.line(canvas, CanvasAnchors[i], CanvasAnchors[j], 0, 1)
                 cv2.imwrite("./output/%s.jpg" % filename, canvas)
 
-            if edge > 2000:
+            if edge > 1800:
                 break
 
+            if DEBUG and edge % 10 == 0:
+                cv2.imshow("img", cv2.resize(canvas, (800, 800)))
+                cv2.waitKey(30)
 
 def getSettings(argv):
     assert len(argv) > 1
@@ -124,6 +126,7 @@ def getSettings(argv):
     path = argv[1]
     return path, VLen, DeclineFactor, Nodes
 
+DEBUG = True
 if __name__ == '__main__':
     if not os.path.exists("./output"):
         os.mkdir("output")
@@ -134,7 +137,14 @@ if __name__ == '__main__':
 
     portrait = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     engine = Engine(Nodes=Nodes, VLen=VLen, DeclineFactor=DeclineFactor)
+
+    if DEBUG:
+        cv2.namedWindow("img", 1)
+
     engine.run(portrait)
+
+    if DEBUG:
+        cv2.destroyAllWindows()
 
 
 
