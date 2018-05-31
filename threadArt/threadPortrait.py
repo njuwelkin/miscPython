@@ -66,10 +66,14 @@ class Engine(object):
         lines = Lines(Nodes)
         color = int(256*VLen*self.DeclineFactor / CanvasSize)
 
+        whitePad = 0.05        # 256*whitePad space to avoid all white imfo lost
+        img = np.uint8(img * (1-whitePad))
+        color = int(color * (1-whitePad))
+
         edge = 0
         linesD = np.ones((Nodes, Nodes), dtype="uint64") * (256 * VLen)
         canvas = np.ones((2048, 2048), dtype="uint8") *255
-
+        waittime = 30
         while True:
             print "Edges: %s, at %s" % (edge, datetime.now())
 
@@ -90,6 +94,9 @@ class Engine(object):
                         i0, j0 = i, j
                         dx = d
             print "	", dx, i0, j0
+            if dx <=0:
+                break
+
             mask = np.zeros((VLen, VLen), dtype="uint8")
             cv2.line(mask, Anchors[i0], Anchors[j0], 1, 1)
             coo = sparse.coo_matrix(mask)
@@ -111,7 +118,8 @@ class Engine(object):
 
             if DEBUG and edge % 10 == 0:
                 cv2.imshow("img", cv2.resize(canvas, (800, 800)))
-                cv2.waitKey(30)
+                k = cv2.waitKey(waittime)
+                waittime = 0 if k == 13 else 30
 
 def getSettings(argv):
     assert len(argv) > 1
