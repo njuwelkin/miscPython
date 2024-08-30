@@ -15,7 +15,7 @@ class Lines(object):
         self._updated = True
         self.mask = ~ np.tril(np.ones((Nodes, Nodes), dtype="bool"))
 
-    def append(self, (i, j)):
+    def append(self, i, j):
         if self.mat[i, j]:
             return False
         self.mat[i, j] = True
@@ -32,14 +32,14 @@ class Engine(object):
     def __init__(self, Nodes=128, VLen=64, CanvasSize=2048, DeclineFactor=1.0):
         self.Nodes = Nodes
         self.VLen = VLen
-        R = VLen / 2
+        R = VLen // 2
         self.R = R
-        self.Anchors = [(R-int(cos(i*2*pi/Nodes)*R+0.5), R+int(sin(i*2*pi/Nodes)*R+0.5)) for i in range(0, Nodes)]
+        self.Anchors = [(int(R-(cos(i*2*pi/Nodes)*R+0.5)), int(R+int(sin(i*2*pi/Nodes)*R+0.5))) for i in range(0, Nodes)]
 
         self.CanvasSize = CanvasSize
         CanvasR = CanvasSize/2
         self.CanvasR = CanvasR
-        self.CanvasAnchors = [(CanvasR-int(cos(i*2*pi/Nodes)*CanvasR+0.5), CanvasR+int(sin(i*2*pi/Nodes)*CanvasR+0.5)) for i in range(0, Nodes)]
+        self.CanvasAnchors = [(int(CanvasR-cos(i*2*pi/Nodes)*CanvasR-0.5), int(CanvasR+sin(i*2*pi/Nodes)*CanvasR-0.5)) for i in range(0, Nodes)]
 
         self.w = self.round_mask()
         self.DeclineFactor = DeclineFactor
@@ -75,7 +75,7 @@ class Engine(object):
         canvas = np.ones((2048, 2048), dtype="uint8") *255
         waittime = 30
         while True:
-            print "Edges: %s, at %s" % (edge, datetime.now())
+            print("Edges: %s, at %s" % (edge, datetime.now()))
 
             x0 = img.sum()
             dx = 0
@@ -93,7 +93,7 @@ class Engine(object):
                     if d > dx:
                         i0, j0 = i, j
                         dx = d
-            print "	", dx, i0, j0
+            print("	", dx, i0, j0)
             if dx <=0:
                 break
 
@@ -103,7 +103,7 @@ class Engine(object):
             for i, j in zip(coo.row, coo.col):
                 p = img[i, j]
                 img[i, j] = 255 if (255-color < p) else p+color
-            lines.append((i0, j0))
+            lines.append(i0, j0)
 
             cv2.line(canvas, CanvasAnchors[i0], CanvasAnchors[j0], 0, 1)
             edge += 1
@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     argv = sys.argv
     path, VLen, DeclineFactor, Nodes = getSettings(argv)
-    print path, VLen, DeclineFactor, Nodes
+    print(path, VLen, DeclineFactor, Nodes)
 
     portrait = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     engine = Engine(Nodes=Nodes, VLen=VLen, DeclineFactor=DeclineFactor)
